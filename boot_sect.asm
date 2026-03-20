@@ -1,52 +1,28 @@
-
-;
-; A boot sector that prints a string using our function.
-;
-[org 0x7c00] ; Tell the assembler where this code will be loaded
-
-mov[BOOT_DRIVE], dl
-
-mov bp, 0x8000
+[ org 0x7c00 ]
+mov bp, 0x9000 ; Set the stack.
 mov sp, bp
 
-mov bx, HELLO_MSG ; Use BX as a parameter to our function , so
-call print_string ; we can specify the address of a string.
-
-mov bx, GOODBYE_MSG
+mov bx, MSG_REAL_MODE
 call print_string
 
-mov bx, 0x9000
-mov dh, 2
-mov dl, [BOOT_DRIVE]
-call disk_load
-
-mov dx, [0x9000]
-call print_hex
-
-mov dx, [0x9000 + 512]
-call print_hex
-
-mov dx, 0x1fb6
-call print_hex
-
-jmp $ ; Hang
+call switch_to_pm ; Note that we never return from here.
+jmp $
 
 %include "print_string.asm"
-%include "print_hex.asm"
-%include "disk_load.asm"
+%include "gdt.asm"
+%include "print_string_pm.asm"
+%include "switch_to_pm.asm"
 
-; Data
-HELLO_MSG:
-db "Hello, World! " , 0 ; <-- The zero on the end tells our routine
+[bits 32]
+BEGIN_PM:
+    mov ebx , MSG_PROT_MODE
+    call print_string_pm 
 
-; when to stop printing characters.
-GOODBYE_MSG:
-db "Goodbye!", 0
+jmp $ ; Hang.
 
-BOOT_DRIVE: db 0 
-; Padding and magic number.
-times 510-( $ - $$ ) db 0
+; Global variables
+MSG_REAL_MODE db "Started in 16 - bit Real Mode " , 0
+MSG_PROT_MODE db "Successfully landed in 32 - bit Protected Mode " , 0
+; Bootsector padding
+times 510-($-$$) db 0
 dw 0xaa55
-
-times 256 dw 0xdada
-times 256 dw 0xface

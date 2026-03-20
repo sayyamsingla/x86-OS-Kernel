@@ -7,8 +7,8 @@ print_hex:
     mov bx, HEX_OUT + 5    ; Point to the last digit in "0x0000".
 
 hex_loop:
-    mov al, dl             ; Take the low byte of DX into AL explicitly.
-    and al, 0x0f           ; Keep only the lowest 4 bits (one hex digit).
+    mov ax, dx             ; Copy DX so masking does not destroy DX yet.
+    and ax, 0x000f         ; Keep only the lowest 4 bits (one hex digit).
 
     ; Convert nibble value (0..15) into ASCII.
     cmp al, 9
